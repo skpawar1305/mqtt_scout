@@ -2,11 +2,18 @@ import 'dart:async';
 import '../../domain/models/broker_profile.dart';
 import '../../domain/models/mqtt_message.dart';
 
-enum ConnectionState { disconnected, connecting, connected, error }
+enum MqttConnectionState {
+  disconnected,
+  connecting,
+  connected,
+  disconnecting,
+  reconnecting,
+  error,
+}
 
 abstract class IMqttClient {
   Stream<MqttMessage> get messageStream;
-  Stream<ConnectionState> get connectionStateStream;
+  Stream<MqttConnectionState> get connectionStateStream;
   Stream<String> get errorStream;
 
   Future<void> connect(BrokerProfile profile);
@@ -19,6 +26,7 @@ abstract class IMqttClient {
     Map<String, String>? userProperties, // MQTT 5 only
   });
 
+  MqttConnectionState get currentState;
   bool get isConnected;
-  BrokerProfile? get currentProfile;
+  MqttProtocolVersion get negotiatedVersion;
 }

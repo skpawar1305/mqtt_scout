@@ -13,7 +13,12 @@ _$SubscriptionImpl _$$SubscriptionImplFromJson(Map<String, dynamic> json) =>
       qos: (json['qos'] as num?)?.toInt() ?? 0,
       noLocal: json['noLocal'] as bool? ?? false,
       retainAsPublished: json['retainAsPublished'] as bool? ?? false,
-      retainHandling: (json['retainHandling'] as num?)?.toInt() ?? 0,
+      retainHandling:
+          $enumDecodeNullable(
+            _$RetainHandlingEnumMap,
+            json['retainHandling'],
+          ) ??
+          RetainHandling.sendAtSubscribe,
       userProperties: (json['userProperties'] as Map<String, dynamic>?)?.map(
         (k, e) => MapEntry(k, e as String),
       ),
@@ -30,8 +35,14 @@ Map<String, dynamic> _$$SubscriptionImplToJson(_$SubscriptionImpl instance) =>
       'qos': instance.qos,
       'noLocal': instance.noLocal,
       'retainAsPublished': instance.retainAsPublished,
-      'retainHandling': instance.retainHandling,
+      'retainHandling': _$RetainHandlingEnumMap[instance.retainHandling]!,
       'userProperties': instance.userProperties,
       'subscribedAt': instance.subscribedAt?.toIso8601String(),
       'subscriptionIdentifier': instance.subscriptionIdentifier,
     };
+
+const _$RetainHandlingEnumMap = {
+  RetainHandling.sendAtSubscribe: 'sendAtSubscribe',
+  RetainHandling.sendAtSubscribeIfNew: 'sendAtSubscribeIfNew',
+  RetainHandling.doNotSend: 'doNotSend',
+};

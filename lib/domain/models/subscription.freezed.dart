@@ -26,7 +26,8 @@ mixin _$Subscription {
   int get qos => throw _privateConstructorUsedError;
   bool get noLocal => throw _privateConstructorUsedError; // MQTT 5.0
   bool get retainAsPublished => throw _privateConstructorUsedError; // MQTT 5.0
-  int get retainHandling => throw _privateConstructorUsedError; // MQTT 5.0
+  RetainHandling get retainHandling =>
+      throw _privateConstructorUsedError; // MQTT 5.0
   Map<String, String>? get userProperties =>
       throw _privateConstructorUsedError; // MQTT 5.0
   DateTime? get subscribedAt => throw _privateConstructorUsedError;
@@ -55,7 +56,7 @@ abstract class $SubscriptionCopyWith<$Res> {
     int qos,
     bool noLocal,
     bool retainAsPublished,
-    int retainHandling,
+    RetainHandling retainHandling,
     Map<String, String>? userProperties,
     DateTime? subscribedAt,
     int? subscriptionIdentifier,
@@ -112,7 +113,7 @@ class _$SubscriptionCopyWithImpl<$Res, $Val extends Subscription>
             retainHandling: null == retainHandling
                 ? _value.retainHandling
                 : retainHandling // ignore: cast_nullable_to_non_nullable
-                      as int,
+                      as RetainHandling,
             userProperties: freezed == userProperties
                 ? _value.userProperties
                 : userProperties // ignore: cast_nullable_to_non_nullable
@@ -146,7 +147,7 @@ abstract class _$$SubscriptionImplCopyWith<$Res>
     int qos,
     bool noLocal,
     bool retainAsPublished,
-    int retainHandling,
+    RetainHandling retainHandling,
     Map<String, String>? userProperties,
     DateTime? subscribedAt,
     int? subscriptionIdentifier,
@@ -202,7 +203,7 @@ class __$$SubscriptionImplCopyWithImpl<$Res>
         retainHandling: null == retainHandling
             ? _value.retainHandling
             : retainHandling // ignore: cast_nullable_to_non_nullable
-                  as int,
+                  as RetainHandling,
         userProperties: freezed == userProperties
             ? _value._userProperties
             : userProperties // ignore: cast_nullable_to_non_nullable
@@ -229,7 +230,7 @@ class _$SubscriptionImpl implements _Subscription {
     this.qos = 0,
     this.noLocal = false,
     this.retainAsPublished = false,
-    this.retainHandling = 0,
+    this.retainHandling = RetainHandling.sendAtSubscribe,
     final Map<String, String>? userProperties,
     this.subscribedAt,
     this.subscriptionIdentifier,
@@ -255,7 +256,7 @@ class _$SubscriptionImpl implements _Subscription {
   // MQTT 5.0
   @override
   @JsonKey()
-  final int retainHandling;
+  final RetainHandling retainHandling;
   // MQTT 5.0
   final Map<String, String>? _userProperties;
   // MQTT 5.0
@@ -338,7 +339,7 @@ abstract class _Subscription implements Subscription {
     final int qos,
     final bool noLocal,
     final bool retainAsPublished,
-    final int retainHandling,
+    final RetainHandling retainHandling,
     final Map<String, String>? userProperties,
     final DateTime? subscribedAt,
     final int? subscriptionIdentifier,
@@ -358,7 +359,7 @@ abstract class _Subscription implements Subscription {
   @override
   bool get retainAsPublished; // MQTT 5.0
   @override
-  int get retainHandling; // MQTT 5.0
+  RetainHandling get retainHandling; // MQTT 5.0
   @override
   Map<String, String>? get userProperties; // MQTT 5.0
   @override

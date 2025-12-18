@@ -4,26 +4,22 @@ import '../../domain/models/subscription.dart';
 
 class MqttSubscriptionManager {
   final IMqttClient _client;
-  final Set<String> _subscribedTopics = {};
+  final Set<Subscription> _subscriptions = {};
 
   MqttSubscriptionManager(this._client);
 
-  Future<void> subscribe(String topic, {int qos = 0}) async {
-    if (_subscribedTopics.contains(topic)) return;
-
-    await _client.subscribe(topic, qos: qos);
-    _subscribedTopics.add(topic);
+  Future<void> subscribe(Subscription subscription) async {
+    _subscriptions.add(subscription);
+    await _client.subscribe(subscription.topic, qos: subscription.qos);
   }
 
   Future<void> unsubscribe(String topic) async {
-    if (!_subscribedTopics.contains(topic)) return;
-
+    _subscriptions.removeWhere((sub) => sub.topic == topic);
     await _client.unsubscribe(topic);
-    _subscribedTopics.remove(topic);
   }
 
   Future<void> updateSubscriptions(List<Subscription> subscriptions) async {
-    final currentTopics = Set<String>.from(_subscribedTopics);
+    final currentTopics = Set<String>.from(_subscriptions.map((s) => s.topic));
     final desiredTopics = subscriptions.map((s) => s.topic).toSet();
 
     // Unsubscribe from topics no longer needed
@@ -34,14 +30,20 @@ class MqttSubscriptionManager {
     // Subscribe to new topics
     for (final subscription in subscriptions) {
       if (!currentTopics.contains(subscription.topic)) {
-        await subscribe(subscription.topic, qos: subscription.qos);
+        await subscribe(subscription);
       }
     }
   }
 
-  Set<String> get subscribedTopics => UnmodifiableSetView(_subscribedTopics);
+  Future<void> restoreSubscriptions() async {
+    for (final sub in _subscriptions) {
+      await subscribe(sub);
+    }
+  }
+
+  Set<Subscription> get subscriptions => UnmodifiableSetView(_subscriptions);
 
   void clear() {
-    _subscribedTopics.clear();
+    _subscriptions.clear();
   }
 }
