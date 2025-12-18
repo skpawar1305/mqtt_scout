@@ -81,6 +81,11 @@ class TopicTree {
     return _pathCache.keys.toList();
   }
 
+  /// Get all topics (alias for getAllTopicPaths for compatibility)
+  List<String> getAllTopics() {
+    return getAllTopicPaths();
+  }
+
   /// Get statistics about the tree
   TreeStatistics getStatistics() {
     return TreeStatistics.calculate(root);
@@ -125,6 +130,15 @@ class TopicTree {
     }
 
     _treeChangedController.add(this);
+  }
+
+  /// Clear the retained flag for a specific topic
+  void clearRetainedFlag(String topicPath) {
+    final node = _pathCache[topicPath];
+    if (node != null) {
+      node.isRetained = false;
+      _nodeUpdatedController.add(node);
+    }
   }
 
   void dispose() {

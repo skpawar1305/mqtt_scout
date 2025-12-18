@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/tree_providers.dart';
+import '../../../core/providers/mqtt_providers.dart';
 import '../../../core/tree/virtualized_topic_tree.dart';
-import '../../../core/tree/topic_node.dart';
 import '../../../core/tree/topic_tree.dart';
+import '../../../core/tree/topic_node.dart';
+import '../../../features/publish/presentation/publish_panel.dart';
 
 class TopicTreeScreen extends ConsumerStatefulWidget {
   const TopicTreeScreen({super.key});
@@ -32,6 +34,11 @@ class _TopicTreeScreenState extends ConsumerState<TopicTreeScreen> {
       appBar: AppBar(
         title: const Text('Topic Tree'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: () => _showPublishPanel(context),
+            tooltip: 'Publish Message',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -67,6 +74,11 @@ class _TopicTreeScreenState extends ConsumerState<TopicTreeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showPublishPanel(context),
+        tooltip: 'Publish Message',
+        child: const Icon(Icons.send),
       ),
     );
   }
@@ -149,6 +161,13 @@ class _TopicTreeScreenState extends ConsumerState<TopicTreeScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Close'),
               ),
+              if (node.isRetained) ...[
+                const SizedBox(width: 8.0),
+                OutlinedButton(
+                  onPressed: () => _clearRetainedMessage(context, node),
+                  child: const Text('Clear Retained'),
+                ),
+              ],
               const SizedBox(width: 8.0),
               ElevatedButton(
                 onPressed: () {
@@ -182,6 +201,66 @@ class _TopicTreeScreenState extends ConsumerState<TopicTreeScreen> {
         ],
       ),
     );
+  }
+
+  void _showPublishPanel(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => const PublishPanel(),
+    );
+  }
+
+  void _clearRetainedMessage(BuildContext context, TopicNode node) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Retained Message'),
+        content: Text(
+          'Are you sure you want to clear the retained message for topic "${node.fullPath}"?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final mqttService = ref.read(mqttServiceProvider);
+        await mqttService.clearRetainedMessage(node.fullPath);
+
+        // Update the tree to reflect the change
+        final tree = ref.read(topicTreeProvider);
+        tree.clearRetainedFlag(node.fullPath);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Cleared retained message for ${node.fullPath}')),
+          );
+          Navigator.of(context).pop(); // Close the details sheet
+        }
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to clear retained message: $error'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _showStatisticsDialog(BuildContext context, TreeStatistics statistics) {

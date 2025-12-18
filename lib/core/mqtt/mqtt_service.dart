@@ -23,8 +23,12 @@ abstract class IMqttClient {
   Future<void> publish(String topic, String payload, {
     int qos = 0,
     bool retain = false,
+    String? contentType, // MQTT 5 only
+    String? responseTopic, // MQTT 5 only
+    int? messageExpiryInterval, // MQTT 5 only
     Map<String, String>? userProperties, // MQTT 5 only
   });
+  Future<void> clearRetainedMessage(String topic);
 
   MqttConnectionState get currentState;
   bool get isConnected;

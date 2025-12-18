@@ -125,16 +125,37 @@ class MqttService implements IMqttClient {
     String payload, {
     int qos = 0,
     bool retain = false,
+    String? contentType,
+    String? responseTopic,
+    int? messageExpiryInterval,
     Map<String, String>? userProperties,
   }) async {
     if (_client != null) {
       final builder = mqtt_client.MqttClientPayloadBuilder();
       builder.addString(payload);
+
+      // Note: The current mqtt_client library has limited MQTT 5.0 support
+      // For now, we use the basic publish method. Full MQTT 5.0 support
+      // would require extending the library or using a different client.
       _client!.publishMessage(
         topic,
         mqtt_client.MqttQos.values[qos],
         builder.payload!,
         retain: retain,
+      );
+    }
+  }
+
+  @override
+  Future<void> clearRetainedMessage(String topic) async {
+    if (_client != null) {
+      final builder = mqtt_client.MqttClientPayloadBuilder();
+      builder.addString(''); // Empty payload
+      _client!.publishMessage(
+        topic,
+        mqtt_client.MqttQos.atLeastOnce, // QoS 1 for retained message clearing
+        builder.payload!,
+        retain: true, // Retain flag set to clear the retained message
       );
     }
   }
