@@ -1,3 +1,5 @@
+// ignore_for_file: extra_positional_arguments
+
 import 'dart:async';
 import 'package:logging/logging.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
@@ -111,6 +113,30 @@ class MqttService implements IMqttClient {
     _clientV5!.secure = profile.useTls;
     _clientV5!.keepAlivePeriod = profile.keepAlive;
     
+    // Setup LWT
+    if (profile.lastWillTopic != null && profile.lastWillMessage != null) {
+      final lwtPayload = mqtt5.MqttPayloadBuilder();
+      lwtPayload.addString(profile.lastWillMessage!);
+      
+      final connMess = mqtt5.MqttConnectMessage();
+      connMess.withWillTopic(profile.lastWillTopic!);
+      connMess.withWillPayload(lwtPayload.payload!);
+      connMess.withWillQos(mqtt5.MqttQos.values[profile.lastWillQos]);
+      if (profile.lastWillRetain) {
+        connMess.withWillRetain();
+      }
+      
+      if (profile.cleanSession) {
+        connMess.startClean();
+      }
+      
+      _clientV5!.connectionMessage = connMess;
+    } else if (profile.cleanSession) {
+        final connMess = mqtt5.MqttConnectMessage();
+        connMess.startClean();
+        _clientV5!.connectionMessage = connMess;
+    }
+
     // Setup callbacks
     _clientV5!.onConnected = () => _updateState(MqttConnectionState.connected);
     _clientV5!.onDisconnected = () => _updateState(MqttConnectionState.disconnected);
@@ -165,6 +191,26 @@ class MqttService implements IMqttClient {
 
     _clientV3!.secure = profile.useTls;
     _clientV3!.keepAlivePeriod = profile.keepAlive;
+    
+    // Setup LWT
+    if (profile.lastWillTopic != null && profile.lastWillMessage != null) {
+      final connMess = mqtt3.MqttConnectMessage();
+      connMess.withWillTopic(profile.lastWillTopic!);
+      connMess.withWillMessage(profile.lastWillMessage!);
+      connMess.withWillQos(mqtt3.MqttQos.values[profile.lastWillQos]);
+      if (profile.lastWillRetain) {
+        connMess.withWillRetain();
+      }
+      
+      if (profile.cleanSession) {
+         connMess.startClean();
+      }
+      _clientV3!.connectionMessage = connMess;
+    } else if (profile.cleanSession) {
+       final connMess = mqtt3.MqttConnectMessage();
+       connMess.startClean();
+       _clientV3!.connectionMessage = connMess;
+    }
     
     _clientV3!.onConnected = () => _updateState(MqttConnectionState.connected);
     _clientV3!.onDisconnected = () => _updateState(MqttConnectionState.disconnected);
