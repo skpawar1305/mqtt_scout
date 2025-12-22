@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt_client;
+import 'package:mqtt_client/mqtt_server_client.dart' as mqtt_server_client;
 import 'package:uuid/uuid.dart';
 import '../../domain/models/broker_profile.dart';
 import '../../domain/models/mqtt_message.dart';
 import 'mqtt_service.dart';
 
 class MqttService implements IMqttClient {
-  mqtt_client.MqttClient? _client;
+  mqtt_server_client.MqttServerClient? _client;
   MqttProtocolVersion _activeVersion = MqttProtocolVersion.v3_1_1;
   MqttConnectionState _currentState = MqttConnectionState.disconnected;
 
@@ -36,15 +37,28 @@ class MqttService implements IMqttClient {
 
   @override
   Future<void> connect(BrokerProfile profile) async {
+    // Prevent multiple concurrent connection attempts
+    if (_currentState == MqttConnectionState.connecting ||
+        _currentState == MqttConnectionState.reconnecting) {
+      return;
+    }
+
     _updateState(MqttConnectionState.connecting);
 
     try {
-      _client = mqtt_client.MqttClient(profile.host, profile.clientId);
+      // Use MqttServerClient (not MqttClient) for non-browser/server environments
+      _client = mqtt_server_client.MqttServerClient(profile.host, profile.clientId);
       _client!.port = profile.port;
       _client!.keepAlivePeriod = profile.keepAlive;
+      _client!.secure = profile.useTls;
+      // Set certificate validation behavior: if validateCertificates is false, accept any cert
+      _client!.onBadCertificate = profile.validateCertificates ? null : (certificate) {
+        return true; // ignore bad certificates
+      };
 
       _setupStreams();
 
+      // The connect method may throw; propagate to callers while updating state
       await _client!.connect(profile.username, profile.password);
       _activeVersion = MqttProtocolVersion.v3_1_1; // For now, only support 3.1.1
       _updateState(MqttConnectionState.connected);
@@ -161,6 +175,10 @@ class MqttService implements IMqttClient {
   }
 
   void _updateState(MqttConnectionState state) {
+    // Debug: log state transitions to help diagnose UI issues
+    // Remove or change to proper logging before merging
+    // ignore: avoid_print
+    print('MqttService: state -> $state');
     _currentState = state;
     _connectionStateController.add(state);
   }

@@ -24,13 +24,29 @@ final connectionManagerProvider = Provider<MqttConnectionManager>((ref) {
 // Subscription Manager Provider
 final subscriptionManagerProvider = Provider<MqttSubscriptionManager>((ref) {
   final service = ref.watch(mqttServiceProvider);
-  return MqttSubscriptionManager(service);
+  final manager = MqttSubscriptionManager(service);
+
+  // When the underlying MQTT service becomes connected, restore saved subscriptions
+  service.connectionStateStream.listen((state) {
+    if (state == MqttConnectionState.connected) {
+      manager.restoreSubscriptions();
+    }
+  });
+
+  return manager;
 });
 
 // Connection State Provider
 final connectionStateProvider = StreamProvider<MqttConnectionState>((ref) {
   final service = ref.watch(mqttServiceProvider);
-  return service.connectionStateStream;
+  // Debug: log initial state and subsequent stream events
+  // ignore: avoid_print
+  print('connectionStateProvider: initial=${service.currentState}');
+  return Stream.fromIterable([service.currentState]).asyncExpand((_) => service.connectionStateStream.map((s) {
+    // ignore: avoid_print
+    print('connectionStateProvider: emit=$s');
+    return s;
+  }));
 });
 
 // MQTT Messages Provider
@@ -43,4 +59,10 @@ final mqttMessagesProvider = StreamProvider<MqttMessage>((ref) {
 final protocolVersionProvider = Provider<MqttProtocolVersion>((ref) {
   final service = ref.watch(mqttServiceProvider);
   return service.negotiatedVersion;
+});
+
+// MQTT Error Stream Provider
+final mqttErrorProvider = StreamProvider<String>((ref) {
+  final service = ref.watch(mqttServiceProvider);
+  return service.errorStream;
 });

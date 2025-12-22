@@ -34,6 +34,7 @@ class BrokerProfile with _$BrokerProfile {
     Map<String, String>? userProperties,
 
     DateTime? lastConnected,
+    @Default(true) bool validateCertificates,
   }) = _BrokerProfile;
 
   factory BrokerProfile.fromJson(Map<String, dynamic> json) =>

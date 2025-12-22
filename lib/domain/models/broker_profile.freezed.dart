@@ -46,6 +46,7 @@ mixin _$BrokerProfile {
   int? get topicAliasMaximum => throw _privateConstructorUsedError;
   Map<String, String>? get userProperties => throw _privateConstructorUsedError;
   DateTime? get lastConnected => throw _privateConstructorUsedError;
+  bool get validateCertificates => throw _privateConstructorUsedError;
 
   /// Serializes this BrokerProfile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -86,6 +87,7 @@ abstract class $BrokerProfileCopyWith<$Res> {
     int? topicAliasMaximum,
     Map<String, String>? userProperties,
     DateTime? lastConnected,
+    bool validateCertificates,
   });
 }
 
@@ -125,6 +127,7 @@ class _$BrokerProfileCopyWithImpl<$Res, $Val extends BrokerProfile>
     Object? topicAliasMaximum = freezed,
     Object? userProperties = freezed,
     Object? lastConnected = freezed,
+    Object? validateCertificates = null,
   }) {
     return _then(
       _value.copyWith(
@@ -212,6 +215,10 @@ class _$BrokerProfileCopyWithImpl<$Res, $Val extends BrokerProfile>
                 ? _value.lastConnected
                 : lastConnected // ignore: cast_nullable_to_non_nullable
                       as DateTime?,
+            validateCertificates: null == validateCertificates
+                ? _value.validateCertificates
+                : validateCertificates // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -249,6 +256,7 @@ abstract class _$$BrokerProfileImplCopyWith<$Res>
     int? topicAliasMaximum,
     Map<String, String>? userProperties,
     DateTime? lastConnected,
+    bool validateCertificates,
   });
 }
 
@@ -287,6 +295,7 @@ class __$$BrokerProfileImplCopyWithImpl<$Res>
     Object? topicAliasMaximum = freezed,
     Object? userProperties = freezed,
     Object? lastConnected = freezed,
+    Object? validateCertificates = null,
   }) {
     return _then(
       _$BrokerProfileImpl(
@@ -374,6 +383,10 @@ class __$$BrokerProfileImplCopyWithImpl<$Res>
             ? _value.lastConnected
             : lastConnected // ignore: cast_nullable_to_non_nullable
                   as DateTime?,
+        validateCertificates: null == validateCertificates
+            ? _value.validateCertificates
+            : validateCertificates // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -404,6 +417,7 @@ class _$BrokerProfileImpl implements _BrokerProfile {
     this.topicAliasMaximum,
     final Map<String, String>? userProperties,
     this.lastConnected,
+    this.validateCertificates = true,
   }) : _userProperties = userProperties;
 
   factory _$BrokerProfileImpl.fromJson(Map<String, dynamic> json) =>
@@ -471,10 +485,13 @@ class _$BrokerProfileImpl implements _BrokerProfile {
 
   @override
   final DateTime? lastConnected;
+  @override
+  @JsonKey()
+  final bool validateCertificates;
 
   @override
   String toString() {
-    return 'BrokerProfile(id: $id, name: $name, host: $host, port: $port, useTls: $useTls, username: $username, password: $password, clientId: $clientId, keepAlive: $keepAlive, cleanSession: $cleanSession, protocolVersion: $protocolVersion, autoDetectProtocol: $autoDetectProtocol, lastWillTopic: $lastWillTopic, lastWillMessage: $lastWillMessage, lastWillQos: $lastWillQos, lastWillRetain: $lastWillRetain, sessionExpiryInterval: $sessionExpiryInterval, maxPacketSize: $maxPacketSize, topicAliasMaximum: $topicAliasMaximum, userProperties: $userProperties, lastConnected: $lastConnected)';
+    return 'BrokerProfile(id: $id, name: $name, host: $host, port: $port, useTls: $useTls, username: $username, password: $password, clientId: $clientId, keepAlive: $keepAlive, cleanSession: $cleanSession, protocolVersion: $protocolVersion, autoDetectProtocol: $autoDetectProtocol, lastWillTopic: $lastWillTopic, lastWillMessage: $lastWillMessage, lastWillQos: $lastWillQos, lastWillRetain: $lastWillRetain, sessionExpiryInterval: $sessionExpiryInterval, maxPacketSize: $maxPacketSize, topicAliasMaximum: $topicAliasMaximum, userProperties: $userProperties, lastConnected: $lastConnected, validateCertificates: $validateCertificates)';
   }
 
   @override
@@ -520,7 +537,9 @@ class _$BrokerProfileImpl implements _BrokerProfile {
               _userProperties,
             ) &&
             (identical(other.lastConnected, lastConnected) ||
-                other.lastConnected == lastConnected));
+                other.lastConnected == lastConnected) &&
+            (identical(other.validateCertificates, validateCertificates) ||
+                other.validateCertificates == validateCertificates));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -548,6 +567,7 @@ class _$BrokerProfileImpl implements _BrokerProfile {
     topicAliasMaximum,
     const DeepCollectionEquality().hash(_userProperties),
     lastConnected,
+    validateCertificates,
   ]);
 
   /// Create a copy of BrokerProfile
@@ -587,6 +607,7 @@ abstract class _BrokerProfile implements BrokerProfile {
     final int? topicAliasMaximum,
     final Map<String, String>? userProperties,
     final DateTime? lastConnected,
+    final bool validateCertificates,
   }) = _$BrokerProfileImpl;
 
   factory _BrokerProfile.fromJson(Map<String, dynamic> json) =
@@ -635,6 +656,8 @@ abstract class _BrokerProfile implements BrokerProfile {
   Map<String, String>? get userProperties;
   @override
   DateTime? get lastConnected;
+  @override
+  bool get validateCertificates;
 
   /// Create a copy of BrokerProfile
   /// with the given fields replaced by the non-null parameter values.

@@ -38,6 +38,7 @@ _$BrokerProfileImpl _$$BrokerProfileImplFromJson(Map<String, dynamic> json) =>
       lastConnected: json['lastConnected'] == null
           ? null
           : DateTime.parse(json['lastConnected'] as String),
+      validateCertificates: json['validateCertificates'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$$BrokerProfileImplToJson(
@@ -64,6 +65,7 @@ Map<String, dynamic> _$$BrokerProfileImplToJson(
   'topicAliasMaximum': instance.topicAliasMaximum,
   'userProperties': instance.userProperties,
   'lastConnected': instance.lastConnected?.toIso8601String(),
+  'validateCertificates': instance.validateCertificates,
 };
 
 const _$MqttProtocolVersionEnumMap = {
