@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import 'mqtt_providers.dart';
 import '../tree/topic_tree.dart';
 import '../tree/topic_expiration_manager.dart';
@@ -36,11 +37,47 @@ final topicExpirationManagerProvider = Provider<TopicExpirationManager>((ref) {
   return manager;
 });
 
-// Tree statistics provider
-final treeStatisticsProvider = Provider<TreeStatistics>((ref) {
-  final tree = ref.watch(topicTreeProvider);
-  return tree.getStatistics();
-});
+// Tree statistics provider with throttling
+final treeStatisticsProvider = NotifierProvider<TreeStatisticsNotifier, TreeStatistics>(TreeStatisticsNotifier.new);
+
+class TreeStatisticsNotifier extends Notifier<TreeStatistics> {
+  Timer? _timer;
+  bool _isDirty = false;
+
+  @override
+  TreeStatistics build() {
+    final tree = ref.watch(topicTreeProvider);
+    
+    // Listen to changes
+    ref.listen(treeChangedProvider, (_, __) => _scheduleUpdate());
+    ref.listen(nodeUpdatedProvider, (_, __) => _scheduleUpdate());
+    
+    // Cancel timer on dispose
+    ref.onDispose(() {
+      _timer?.cancel();
+    });
+
+    return tree.getStatistics();
+  }
+
+  void _scheduleUpdate() {
+    _isDirty = true;
+    if (_timer == null) {
+      _timer = Timer(const Duration(milliseconds: 500), _flush);
+    }
+  }
+
+  void _flush() {
+    _timer = null;
+    if (_isDirty) {
+      // Use ref.read to avoid creating a dependency loop or rebuilding the notifier
+      // The tree instance itself is stable.
+      final tree = ref.read(topicTreeProvider);
+      state = tree.getStatistics();
+      _isDirty = false;
+    }
+  }
+}
 
 // Stream of tree changes
 final treeChangedProvider = StreamProvider<TopicTree>((ref) async* {
