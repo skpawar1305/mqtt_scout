@@ -66,4 +66,48 @@ class TopicNode {
       isSubscribed: isSubscribed ?? this.isSubscribed,
     );
   }
+  // UI Helper methods
+  void toggleExpanded() {
+    isExpanded = !isExpanded;
+  }
+
+  List<TopicNode> getVisibleNodes({int maxDepth = -1}) {
+    final visibleNodes = <TopicNode>[];
+    _collectVisibleNodes(this, visibleNodes, 0, maxDepth);
+    return visibleNodes;
+  }
+
+  void _collectVisibleNodes(
+    TopicNode node,
+    List<TopicNode> result,
+    int currentDepth,
+    int maxDepth,
+  ) {
+    // Don't include root in the list usually, but let's see how VirtualizedTopicTree uses it.
+    // It passes root.getVisibleNodes.
+    // If root is "root" (dummy), we might want to skip it or handle it.
+    // Assuming we start with children of root if root is hidden, but here we recurse.
+    
+    // If this is the root node (dummy), we don't add it, but we process its children
+    if (node.fullPath.isNotEmpty) {
+      result.add(node);
+    }
+
+    if (node.isExpanded && (maxDepth == -1 || currentDepth < maxDepth)) {
+      final sortedChildren = node.children.values.toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+      
+      for (final child in sortedChildren) {
+        _collectVisibleNodes(child, result, currentDepth + 1, maxDepth);
+      }
+    } else if (node.fullPath.isEmpty) {
+      // Always expand root
+      final sortedChildren = node.children.values.toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+      
+      for (final child in sortedChildren) {
+        _collectVisibleNodes(child, result, currentDepth + 1, maxDepth);
+      }
+    }
+  }
 }

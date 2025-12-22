@@ -89,89 +89,104 @@ class TopicNodeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasChildren = node.hasChildren;
+    
+    // Calculate indentation
+    final indent = depth * 16.0;
 
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.only(left: depth * 20.0 + 16.0, right: 16.0),
-        height: 48.0,
+        height: 28.0, // Compact height like MQTT Explorer
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: theme.dividerColor.withOpacity(0.1),
+              width: 0.5,
+            ),
+          ),
+        ),
         child: Row(
           children: [
+            SizedBox(width: indent),
+            
             // Expansion indicator
             if (hasChildren)
-              IconButton(
-                icon: Icon(
-                  node.isExpanded ? Icons.expand_more : Icons.chevron_right,
-                  size: 20.0,
-                ),
-                onPressed: onExpand,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 24.0,
-                  minHeight: 24.0,
+              InkWell(
+                onTap: onExpand,
+                child: Icon(
+                  node.isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
+                  size: 18.0,
+                  color: theme.iconTheme.color?.withOpacity(0.7),
                 ),
               )
             else
-              const SizedBox(width: 24.0),
+              const SizedBox(width: 18.0),
 
-            // Topic icon
-            Icon(
-              _getTopicIcon(),
-              size: 20.0,
-              color: _getTopicColor(theme),
-            ),
-            const SizedBox(width: 8.0),
+            const SizedBox(width: 4.0),
 
-            // Topic name
+            // Topic Name
             Expanded(
+              flex: 2,
               child: Text(
                 node.name,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: node.isRetained ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13.0,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
 
-            // Message count
+            // Value Preview (if leaf or has message)
+            if (node.lastMessage != null) ...[
+              const SizedBox(width: 8.0),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  node.lastMessage!.payload,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                    fontSize: 12.0,
+                    fontFamily: 'monospace',
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+
+            // Message count / Retained flag
+            const SizedBox(width: 8.0),
+            if (node.isRetained)
+              Padding(
+                padding: const EdgeInsets.only(right: 4.0),
+                child: Icon(
+                  Icons.save,
+                  size: 12.0,
+                  color: theme.colorScheme.secondary,
+                ),
+              ),
+              
             if (node.messageCount > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+                padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(10.0),
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4.0),
                 ),
                 child: Text(
                   node.messageCount.toString(),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontSize: 10.0,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-
-            // Retained indicator
-            if (node.isRetained)
-              Icon(
-                Icons.bookmark,
-                size: 16.0,
-                color: theme.colorScheme.secondary,
               ),
           ],
         ),
       ),
     );
-  }
-
-  IconData _getTopicIcon() {
-    if (node.isRetained) return Icons.bookmark_border;
-    if (node.hasChildren) return Icons.folder;
-    return Icons.article;
-  }
-
-  Color _getTopicColor(ThemeData theme) {
-    if (node.isRetained) return theme.colorScheme.secondary;
-    if (node.hasChildren) return theme.colorScheme.primary;
-    return theme.colorScheme.onSurface;
   }
 }

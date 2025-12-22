@@ -43,9 +43,10 @@ final treeStatisticsProvider = Provider<TreeStatistics>((ref) {
 });
 
 // Stream of tree changes
-final treeChangedProvider = StreamProvider<TopicTree>((ref) {
+final treeChangedProvider = StreamProvider<TopicTree>((ref) async* {
   final tree = ref.watch(topicTreeProvider);
-  return tree.treeChanged;
+  yield tree;
+  yield* tree.treeChanged;
 });
 
 // Stream of node updates
@@ -65,3 +66,6 @@ final allTopicPathsProvider = Provider<List<String>>((ref) {
   final tree = ref.watch(topicTreeProvider);
   return tree.getAllTopicPaths();
 });
+
+// Selected node provider for UI selection
+final selectedNodeProvider = StateProvider<TopicNode?>((ref) => null);

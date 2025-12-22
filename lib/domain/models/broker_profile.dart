@@ -35,6 +35,7 @@ class BrokerProfile with _$BrokerProfile {
 
     DateTime? lastConnected,
     @Default(true) bool validateCertificates,
+    @Default(MqttScheme.tcp) MqttScheme scheme,
   }) = _BrokerProfile;
 
   factory BrokerProfile.fromJson(Map<String, dynamic> json) =>
@@ -42,3 +43,5 @@ class BrokerProfile with _$BrokerProfile {
 }
 
 enum MqttProtocolVersion { v3_1_1, v5 }
+
+enum MqttScheme { tcp, ws }

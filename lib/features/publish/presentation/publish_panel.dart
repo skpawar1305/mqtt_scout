@@ -43,9 +43,8 @@ class _PublishPanelState extends ConsumerState<PublishPanel> {
 
     return Container(
       padding: const EdgeInsets.all(16.0),
-      constraints: const BoxConstraints(maxHeight: 600),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
@@ -70,16 +69,19 @@ class _PublishPanelState extends ConsumerState<PublishPanel> {
                 tooltip: 'Load Template',
               ),
               IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: 'Close',
+                icon: const Icon(Icons.bookmark),
+                onPressed: _loadTemplate,
+                tooltip: 'Load Template',
               ),
             ],
           ),
           const SizedBox(height: 16.0),
 
           // Topic input with autocomplete
-          Autocomplete<String>(
+          // Topic input with autocomplete
+          RawAutocomplete<String>(
+            textEditingController: _topicController,
+            focusNode: FocusNode(),
             optionsBuilder: (textEditingValue) {
               if (textEditingValue.text.isEmpty) return [];
               final tree = ref.read(topicTreeProvider);
@@ -271,6 +273,7 @@ class _PublishPanelState extends ConsumerState<PublishPanel> {
             ),
           ],
         ],
+        ),
       ),
     );
   }
@@ -307,7 +310,7 @@ class _PublishPanelState extends ConsumerState<PublishPanel> {
         );
 
         // Close the panel
-        Navigator.of(context).pop();
+        // Navigator.of(context).pop();
       }
     } catch (error) {
       if (mounted) {

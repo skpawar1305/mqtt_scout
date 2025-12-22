@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../mqtt/i_mqtt_client.dart';
 import '../mqtt/mqtt_service.dart';
-import '../mqtt/mqtt_service_impl.dart';
 import '../mqtt/mqtt_connection_manager.dart';
-import '../mqtt/mqtt_subscription_manager.dart';
+import '../mqtt/subscription_manager.dart';
+import '../mqtt/models/mqtt_connection_state.dart';
 import '../../domain/models/mqtt_message.dart';
 import '../../domain/models/broker_profile.dart';
 
@@ -22,31 +23,28 @@ final connectionManagerProvider = Provider<MqttConnectionManager>((ref) {
 });
 
 // Subscription Manager Provider
-final subscriptionManagerProvider = Provider<MqttSubscriptionManager>((ref) {
+final subscriptionManagerProvider = Provider<SubscriptionManager>((ref) {
   final service = ref.watch(mqttServiceProvider);
-  final manager = MqttSubscriptionManager(service);
+  final manager = SubscriptionManager(service);
 
   // When the underlying MQTT service becomes connected, restore saved subscriptions
-  service.connectionStateStream.listen((state) {
-    if (state == MqttConnectionState.connected) {
-      manager.restoreSubscriptions();
-    }
-  });
+  // Note: SubscriptionManager already listens to connection state internally, 
+  // so we don't need to do it here again if the constructor handles it.
+  // Checking SubscriptionManager implementation... yes, it does.
+  
+  ref.onDispose(() => manager.dispose());
 
   return manager;
 });
 
 // Connection State Provider
-final connectionStateProvider = StreamProvider<MqttConnectionState>((ref) {
+// Connection State Provider
+final connectionStateProvider = StreamProvider<MqttConnectionState>((ref) async* {
   final service = ref.watch(mqttServiceProvider);
-  // Debug: log initial state and subsequent stream events
-  // ignore: avoid_print
-  print('connectionStateProvider: initial=${service.currentState}');
-  return Stream.fromIterable([service.currentState]).asyncExpand((_) => service.connectionStateStream.map((s) {
-    // ignore: avoid_print
-    print('connectionStateProvider: emit=$s');
-    return s;
-  }));
+  // Yield initial state immediately
+  yield service.currentState;
+  // Yield subsequent state changes
+  yield* service.connectionStateStream;
 });
 
 // MQTT Messages Provider

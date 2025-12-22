@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'mqtt_service.dart';
+import 'i_mqtt_client.dart';
+import 'models/mqtt_connection_state.dart';
 import '../../domain/models/broker_profile.dart';
-import 'reconnection_strategy.dart';
+import 'utils/reconnection_strategy.dart';
 
 class MqttConnectionManager {
   final IMqttClient _client;
@@ -14,7 +15,7 @@ class MqttConnectionManager {
   MqttConnectionManager(
     this._client, {
     ReconnectionStrategy? reconnectionStrategy,
-  }) : _reconnectionStrategy = reconnectionStrategy ?? const ReconnectionStrategy() {
+  }) : _reconnectionStrategy = reconnectionStrategy ?? ReconnectionStrategy() {
     // Listen to connection state changes to trigger reconnection
     _client.connectionStateStream.listen((state) {
       if (state == MqttConnectionState.disconnected && _shouldReconnect && _lastProfile != null) {

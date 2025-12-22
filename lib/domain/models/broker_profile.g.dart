@@ -39,6 +39,9 @@ _$BrokerProfileImpl _$$BrokerProfileImplFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['lastConnected'] as String),
       validateCertificates: json['validateCertificates'] as bool? ?? true,
+      scheme:
+          $enumDecodeNullable(_$MqttSchemeEnumMap, json['scheme']) ??
+          MqttScheme.tcp,
     );
 
 Map<String, dynamic> _$$BrokerProfileImplToJson(
@@ -66,9 +69,12 @@ Map<String, dynamic> _$$BrokerProfileImplToJson(
   'userProperties': instance.userProperties,
   'lastConnected': instance.lastConnected?.toIso8601String(),
   'validateCertificates': instance.validateCertificates,
+  'scheme': _$MqttSchemeEnumMap[instance.scheme]!,
 };
 
 const _$MqttProtocolVersionEnumMap = {
   MqttProtocolVersion.v3_1_1: 'v3_1_1',
   MqttProtocolVersion.v5: 'v5',
 };
+
+const _$MqttSchemeEnumMap = {MqttScheme.tcp: 'tcp', MqttScheme.ws: 'ws'};
