@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/tree/topic_filter.dart';
+import '../../../../core/tree/topic_filter.dart';
 
 class TopicFilterNotifier extends StateNotifier<TopicFilter> {
   TopicFilterNotifier() : super(const TopicFilter());
