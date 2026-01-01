@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/connection/presentation/connect_screen.dart';
 import '../features/tree/presentation/topic_tree_screen.dart';
 
-import '../features/home/presentation/home_screen.dart';
+import '../features/home/presentation/responsive_home.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -15,7 +15,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const ResponsiveHome(),
       ),
     ],
   );

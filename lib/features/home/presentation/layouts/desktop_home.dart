@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:split_view/split_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/providers/mqtt_providers.dart';
-import '../../../core/providers/theme_provider.dart';
-import '../../tree/presentation/topic_tree_panel.dart';
-import '../../viewer/presentation/message_viewer_panel.dart';
-import '../../publish/presentation/publish_panel.dart';
+import '../../../../core/providers/mqtt_providers.dart';
+import '../../../../core/providers/theme_provider.dart';
+import '../../../tree/presentation/topic_tree_panel.dart';
+import '../../../viewer/presentation/message_viewer_panel.dart';
+import '../../../publish/presentation/publish_panel.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class DesktopHome extends StatelessWidget {
+  const DesktopHome({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -63,7 +63,7 @@ class TreeStatisticsNotifier extends Notifier<TreeStatistics> {
   void _scheduleUpdate() {
     _isDirty = true;
     if (_timer == null) {
-      _timer = Timer(const Duration(milliseconds: 500), _flush);
+      _timer = Timer(const Duration(milliseconds: 16), _flush);
     }
   }
 
