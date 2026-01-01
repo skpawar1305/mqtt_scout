@@ -105,3 +105,58 @@ jobs:
         with:
           name: ios-build
           path: build/ios/iphoneos/Runner.app
+
+  release:
+    name: Create Release
+    needs: [build-android, build-web, build-windows, build-linux, build-macos, build-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Zip Artifacts
+        run: |
+          cd artifacts
+          # Web
+          if [ -d "web-build" ]; then
+            cd web-build && zip -r ../mqtt-scout-web.zip . && cd ..
+          fi
+          # Windows
+          if [ -d "windows-build" ]; then
+            cd windows-build && zip -r ../mqtt-scout-windows.zip . && cd ..
+          fi
+          # Linux
+          if [ -d "linux-build" ]; then
+            cd linux-build && zip -r ../mqtt-scout-linux.zip . && cd ..
+          fi
+          # macOS
+          if [ -d "macos-build" ]; then
+            cd macos-build && zip -r ../mqtt-scout-macos.zip . && cd ..
+          fi
+          # iOS
+          if [ -d "ios-build" ]; then
+            cd ios-build && zip -r ../mqtt-scout-ios.zip . && cd ..
+          fi
+          # Android
+          if [ -d "android-appbundle" ]; then
+            mv android-appbundle/app-release.aab mqtt-scout-android.aab
+          fi
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/mqtt-scout-web.zip
+            artifacts/mqtt-scout-windows.zip
+            artifacts/mqtt-scout-linux.zip
+            artifacts/mqtt-scout-macos.zip
+            artifacts/mqtt-scout-ios.zip
+            artifacts/mqtt-scout-android.aab
+          generate_release_notes: true
