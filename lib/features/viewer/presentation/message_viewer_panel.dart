@@ -7,8 +7,10 @@ import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/dracula.dart';
 import 'package:intl/intl.dart';
 import '../../../core/providers/tree_providers.dart';
-import '../../../domain/models/topic_node.dart';
+import '../../../core/providers/mqtt_providers.dart';
+import '../../../core/tree/topic_node.dart';
 import '../../../domain/models/mqtt_message.dart';
+import '../../home/presentation/widgets/topic_chart.dart';
 
 class MessageViewerPanel extends ConsumerWidget {
   const MessageViewerPanel({super.key});
@@ -64,8 +66,28 @@ class MessageViewerPanel extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildInfoRow(context, 'Topic', selectedNode.fullPath, isTitle: true),
+                          
+                          if (_hasNumericHistory(selectedNode)) ...[
+                             const SizedBox(height: 16),
+                             Container(
+                               height: 220,
+                               decoration: BoxDecoration(
+                                 border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+                                 borderRadius: BorderRadius.circular(8),
+                               ),
+                               padding: const EdgeInsets.all(8),
+                               child: Column(
+                                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                                 children: [
+                                   Text('History', style: Theme.of(context).textTheme.labelSmall),
+                                   Expanded(child: TopicChart(topicNode: selectedNode, isDark: isDark)),
+                                 ],
+                               )
+                             ),
+                          ],
+
                           const SizedBox(height: 16),
-                          _buildMessageDetails(context, selectedNode.lastMessage!),
+                          _buildMessageDetails(context, ref, selectedNode.lastMessage!, selectedNode.fullPath),
                           const SizedBox(height: 24),
                           const Text('Payload', style: TextStyle(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 8),
@@ -76,6 +98,20 @@ class MessageViewerPanel extends ConsumerWidget {
         ),
       ],
     ));
+  }
+
+  bool _hasNumericHistory(TopicNode node) {
+    if (node.messages.length < 2) return false;
+    int numericCount = 0;
+    // Check last 20 messages to avoid iterating everything
+    final checkCount = node.messages.length > 20 ? 20 : node.messages.length;
+    final recentMessages = node.messages.sublist(node.messages.length - checkCount);
+    
+    for (final msg in recentMessages) {
+      if (double.tryParse(msg.payload) != null) numericCount++;
+    }
+    // Return true if at least 50% of recent messages are numeric
+    return numericCount >= checkCount * 0.5;
   }
 
   Widget _buildInfoRow(BuildContext context, String label, String value, {bool isTitle = false}) {
@@ -93,15 +129,39 @@ class MessageViewerPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildMessageDetails(BuildContext context, MqttMessage message) {
+  Widget _buildMessageDetails(BuildContext context, WidgetRef ref, MqttMessage message, String topic) {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
     
     return Wrap(
       spacing: 24,
       runSpacing: 16,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         _buildInfoRow(context, 'QoS', message.qos.toString()),
-        _buildInfoRow(context, 'Retained', message.retained ? 'Yes' : 'No'),
+        Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+                _buildInfoRow(context, 'Retained', message.retained ? 'Yes' : 'No'),
+                if (message.retained) ...[
+                    const SizedBox(width: 8),
+                    SizedBox(
+                        height: 24,
+                        child: OutlinedButton(
+                            onPressed: () {
+                                _showClearRetainedDialog(context, ref, topic);
+                            },
+                            style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                textStyle: const TextStyle(fontSize: 10),
+                                side: BorderSide(color: Theme.of(context).colorScheme.error),
+                                foregroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                            child: const Text('CLEAR'),
+                        ),
+                    ),
+                ]
+            ],
+        ),
         _buildInfoRow(context, 'Received', dateFormat.format(message.timestamp)),
         if (message.contentType != null)
           _buildInfoRow(context, 'Content Type', message.contentType!),
@@ -109,6 +169,41 @@ class MessageViewerPanel extends ConsumerWidget {
           _buildInfoRow(context, 'Response Topic', message.responseTopic!),
       ],
     );
+  }
+
+  Future<void> _showClearRetainedDialog(BuildContext context, WidgetRef ref, String topic) async {
+      final confirm = await showDialog<bool>(
+          context: context, 
+          builder: (context) => AlertDialog(
+              title: const Text('Clear Retained Message?'),
+              content: Text('This will publish an empty retained message to "$topic", which should clear it from the broker.'),
+              actions: [
+                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, true), 
+                      style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                      child: const Text('Clear'),
+                    ),
+              ],
+          ),
+      );
+
+      if (confirm == true) {
+          try {
+              await ref.read(mqttServiceProvider).clearRetainedMessage(topic);
+              if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Retained message cleared')),
+                  );
+              }
+          } catch (e) {
+              if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error clearing retained message: $e')),
+                  );
+              }
+          }
+      }
   }
 
   Widget _buildPayloadView(BuildContext context, String payload, bool isDark) {

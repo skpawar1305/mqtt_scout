@@ -6,6 +6,8 @@ import '../../../core/tree/virtualized_topic_tree.dart';
 import '../../../core/tree/topic_tree.dart';
 import '../../../core/tree/topic_node.dart';
 import '../../../features/publish/presentation/publish_panel.dart';
+import 'providers/topic_tree_filter_provider.dart';
+import 'topic_tree_search_bar.dart';
 
 class TopicTreePanel extends ConsumerStatefulWidget {
   const TopicTreePanel({super.key});
@@ -26,92 +28,70 @@ class _TopicTreePanelState extends ConsumerState<TopicTreePanel> {
 
   @override
   Widget build(BuildContext context) {
-    final treeAsync = ref.watch(treeChangedProvider);
-    final statistics = ref.watch(treeStatisticsProvider);
+    // NOTE: We do NOT watch volatile providers here to prevent full panel rebuilds.
+    // Instead, sub-widgets watch what they need.
 
     return Column(
       children: [
         // Header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: Row(
-            children: [
-              const Text('Topic Tree', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.send, size: 20),
-                onPressed: () => _showPublishPanel(context),
-                tooltip: 'Publish',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 16),
-              IconButton(
-                icon: const Icon(Icons.refresh, size: 20),
-                onPressed: () {
-                  final tree = ref.read(topicTreeProvider);
-                  tree.clear();
-                },
-                tooltip: 'Clear',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 16),
-              IconButton(
-                icon: const Icon(Icons.info_outline, size: 20),
-                onPressed: () => _showStatisticsDialog(context, statistics),
-                tooltip: 'Stats',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-        ),
+        const _TopicTreeHeader(),
+
+        // Search Bar
+        const TopicTreeSearchBar(),
 
         // Statistics bar
-        _buildStatisticsBar(statistics),
+        const _StatisticsBar(),
 
         // Tree view
-        Expanded(
-          child: treeAsync.when(
-            data: (tree) => VirtualizedTopicTree(
-              root: tree.root,
-              onNodeTap: (node) => _onNodeTap(context, node),
-              onNodeExpand: (node) => _onNodeExpand(node),
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(
-              child: Text('Error: $error'),
-            ),
-          ),
+        const Expanded(
+          child: _TopicTreeView(),
         ),
       ],
     );
   }
+}
 
-  Widget _buildStatisticsBar(TreeStatistics statistics) {
+class _TopicTreeHeader extends ConsumerWidget {
+  const _TopicTreeHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('${statistics.totalTopics} topics', style: Theme.of(context).textTheme.bodySmall),
-          Text('${statistics.totalMessages} msgs', style: Theme.of(context).textTheme.bodySmall),
+          const Text('Topic Tree', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.send, size: 20),
+            onPressed: () => _showPublishPanel(context),
+            tooltip: 'Publish',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 16),
+          IconButton(
+            icon: const Icon(Icons.refresh, size: 20),
+            onPressed: () {
+              final tree = ref.read(topicTreeProvider);
+              tree.clear();
+            },
+            tooltip: 'Clear',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 16),
+          IconButton(
+            icon: const Icon(Icons.info_outline, size: 20),
+            onPressed: () => _showStatisticsDialog(context, ref),
+            tooltip: 'Stats',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
         ],
       ),
     );
-  }
-
-  void _onNodeTap(BuildContext context, TopicNode node) {
-    ref.read(selectedNodeProvider.notifier).state = node;
-  }
-
-  void _onNodeExpand(TopicNode node) {
-    // Handle node expansion
   }
 
   void _showPublishPanel(BuildContext context) {
@@ -122,7 +102,9 @@ class _TopicTreePanelState extends ConsumerState<TopicTreePanel> {
     );
   }
 
-  void _showStatisticsDialog(BuildContext context, TreeStatistics statistics) {
+  void _showStatisticsDialog(BuildContext context, WidgetRef ref) {
+    // Read statistics only when needed, not watching it
+    final statistics = ref.read(treeStatisticsProvider);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -144,5 +126,61 @@ class _TopicTreePanelState extends ConsumerState<TopicTreePanel> {
         ],
       ),
     );
+  }
+}
+
+class _StatisticsBar extends ConsumerWidget {
+  const _StatisticsBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Only this widget rebuilds on stats updates
+    final statistics = ref.watch(treeStatisticsProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('${statistics.totalTopics} topics', style: Theme.of(context).textTheme.bodySmall),
+          Text('${statistics.totalMessages} msgs', style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopicTreeView extends ConsumerWidget {
+  const _TopicTreeView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Only rebuilds on tree structure changes or filter changes
+    final treeAsync = ref.watch(treeChangedProvider);
+    final filter = ref.watch(topicFilterProvider);
+
+    return treeAsync.when(
+      data: (tree) => VirtualizedTopicTree(
+        root: tree.root,
+        filter: filter,
+        onNodeTap: (node) => _onNodeTap(ref, node),
+        onNodeExpand: (node) => _onNodeExpand(node),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Text('Error: $error'),
+      ),
+    );
+  }
+
+  void _onNodeTap(WidgetRef ref, TopicNode node) {
+    ref.read(selectedNodeProvider.notifier).state = node;
+  }
+
+  void _onNodeExpand(TopicNode node) {
+    // Handle node expansion
   }
 }

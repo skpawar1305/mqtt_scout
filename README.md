@@ -18,7 +18,11 @@
   - Reconnection strategies with exponential backoff.
 - **Message Inspection**:
   - Real-time message monitoring.
+  - **Numeric Charts**: Visualize numeric data over time per topic.
   - Support for various payload formats (JSON, Text, Binary, etc.).
+  - **Retained Message Management**: Inspect and clear retained messages directly from the UI.
+- **Advanced Navigation**:
+  - **Search & Filter**: Filter topics by name, regex, or retained status.
 - **Privacy Focused**: No telemetry tracking. usage details stay local.
 
 ## 🛠️ Getting Started
@@ -73,7 +77,9 @@
     - Click **Connect**.
 3.  **Explore**:
     - Once connected, the **Topic Tree** will populate as messages arrive.
-    - Click on topics to view message history and details.
+    - **Filter**: Use the search bar to filter by name/path. Toggle `.*` for regex or `Save Icon` for retained-only topics.
+    - **Inspect**: Click on topics. If the topic has numeric data, a **Chart** will automatically display.
+    - **Manage**: If a topic has a retained message, click the **Clear** button to remove it from the broker.
 4.  **Publish**:
     - Use the Publish tool to send messages to specific topics with custom payloads and QoS settings.
 
@@ -82,9 +88,10 @@
 - [x] Core MQTT 3.1.1 & 5.0 Implementation
 - [x] Basic Topic Tree Visualization
 - [x] Cross-Platform UI (Desktop/Mobile)
-- [ ] Advanced Filters & Search
-- [ ] Scripting & Automation
-- [ ] Cloud Sync & Backup
+- [x] Advanced Filters & Search
+- [x] Numeric Charts & Visualizations
+- [x] Retained Message Management
+- [ ] Session Restoration (Persistence)
 
 ## 🤝 Contributing
 

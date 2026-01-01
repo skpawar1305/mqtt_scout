@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'topic_node.dart';
+import 'topic_filter.dart';
 
 /// Efficient virtualized tree view for large topic hierarchies
 class VirtualizedTopicTree extends StatefulWidget {
   final TopicNode root;
   final int maxVisibleDepth;
+  final TopicFilter? filter;
   final Function(TopicNode)? onNodeTap;
   final Function(TopicNode)? onNodeExpand;
 
@@ -12,6 +14,7 @@ class VirtualizedTopicTree extends StatefulWidget {
     super.key,
     required this.root,
     this.maxVisibleDepth = -1,
+    this.filter,
     this.onNodeTap,
     this.onNodeExpand,
   });
@@ -31,7 +34,7 @@ class _VirtualizedTopicTreeState extends State<VirtualizedTopicTree> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleNodes = widget.root.getVisibleNodes(maxDepth: widget.maxVisibleDepth);
+    final visibleNodes = widget.root.getVisibleNodes(maxDepth: widget.maxVisibleDepth, filter: widget.filter);
 
     return ListView.builder(
       controller: _scrollController,
